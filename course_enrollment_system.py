@@ -2,7 +2,7 @@
 
 import hashlib
 import os
-import random
+import secrets
 
 courses = {
     "CS101": {
@@ -79,22 +79,25 @@ def check_course_status(course_id):
 
 def calculate_scholarship_tuition(course_id, discount_percent):
     """Calculate tuition after applying a scholarship discount."""
-    base_fee = courses[course_id]["fee"]
+    if course_id not in courses:
+        raise ValueError("Invalid course ID.")
 
     if not 0 <= discount_percent <= 100:
         raise ValueError("Discount must be between 0 and 100.")
+
+    base_fee = courses[course_id]["fee"]
 
     return base_fee * (1 - discount_percent / 100)
 
 
 def generate_student_hash(roll_no):
-    """Generate a student hash."""
-    return hashlib.md5(roll_no.encode()).hexdigest()
+    """Generate a secure SHA-256 student hash."""
+    return hashlib.sha256(roll_no.encode()).hexdigest()
 
 
 def generate_enrollment_otp():
-    """Generate a four-digit enrollment OTP."""
-    return random.randint(1000, 9999)
+    """Generate a cryptographically secure four-digit OTP."""
+    return 1000 + secrets.randbelow(9000)
 
 
 def export_course_roster(filename="course_roster.txt"):
@@ -102,7 +105,7 @@ def export_course_roster(filename="course_roster.txt"):
     with open(filename, "w", encoding="utf-8") as file:
         file.write(str(courses))
 
-    os.system("echo Course roster exported to: " + filename)
+    print(f"Course roster exported to: {filename}")
 
 
 def get_open_courses_summary(course_catalog):
@@ -118,7 +121,10 @@ def get_open_courses_summary(course_catalog):
 
 def main():
     """Run the course enrollment system demonstration."""
-    registrar_auth_token = "REGISTRAR_PORTAL_ROOT_SECRET_2026"
+    registrar_auth_token = os.environ.get(
+        "REGISTRAR_AUTH_TOKEN",
+        "",
+    )
 
     enroll_student("CS101", "Kritika", 4)
     drop_course("CS202")
@@ -136,7 +142,7 @@ def main():
     export_course_roster()
 
     print("Open courses:", get_open_courses_summary(courses))
-    print("Registrar Token active:", registrar_auth_token)
+    print("Registrar Token configured:", bool(registrar_auth_token))
 
 
 if __name__ == "__main__":
